@@ -104,10 +104,10 @@ def calculate_image(person_embd, image_data):
                 label.append(idx)
         
         dist, idx = index.search(person_embd, k)
-        if len(idx) != 0:
-            for i, val in enumerate(idx):
+        if len(idx[0]) != 0:
+            for i, val in enumerate(idx[0]):
                 if dist[0][i] >= 400.0:
-                    similiar_images.append({"id": image_data[label[val[i]]]["id"],"name": image_data[label[val[i]]]["name"], "dist": float(dist[0][i])})
+                    similiar_images.append({"id": image_data[label[val]]["id"],"name": image_data[label[val]]["name"], "dist": float(dist[0][i])})
     return similiar_images
 
 def calculate_album(person_embd, album_data):
@@ -125,10 +125,31 @@ def calculate_album(person_embd, album_data):
             label.append(idx)
         
         dist, idx = index.search(person_embd, k)
-        if len(idx) != 0:
-            for i, val in enumerate(idx):
+        if len(idx[0]) != 0:
+            for i, val in enumerate(idx[0]):
                 if dist[0][i] >= 400.0:
-                    similiar_album.append(album_data[label[val[i]]])
+                    similiar_album.append(album_data[label[val]])
+    return similiar_album
+
+def calculate_album_selfie(person_embd, album_data):
+    similiar_album = []
+    person_embd = np.array(person_embd, dtype='f')
+    person_embd = np.expand_dims(person_embd, axis=0)
+    if len(album_data) != 0:
+        d = 512
+        k = len(album_data)
+        index = faiss.IndexFlatIP(d)
+        label = []
+        #start adding image to faiss
+        for idx, val in enumerate(album_data):
+            index.add(np.array([val["embeddings"]], dtype='f'))
+            label.append(idx)
+        
+        dist, idx = index.search(person_embd, k)
+        if len(idx[0]) != 0:
+            for i, val in enumerate(idx[0]):
+                if dist[0][i] >= 400.0:
+                    similiar_album.append({"album": album_data[label[val]], "dist": float(dist[0][i])})
     return similiar_album
 
 def get_selfie_response(person_embd, album_data_json, selfie_data_json):

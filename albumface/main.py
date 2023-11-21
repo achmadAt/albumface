@@ -22,7 +22,7 @@ def main():
     get_similiar.add_argument("-d", "--data", help="json file that store album data", required=True)
     args = parser.parse_args()
 
-    version =  "0.0.0.0.3"
+    version =  "0.0.0.0.4"
     if args.version:
         print(version)
         exit(0)

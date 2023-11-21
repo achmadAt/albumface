@@ -103,13 +103,36 @@ def calculate_image(person_embd, image_data):
                 label.append(idx)
         
         dist, idx = index.search(person_embd, k)
-        if len(idx) != 0:
-            for i, val in enumerate(idx):
+        if len(idx[0]) != 0:
+            for i, val in enumerate(idx[0]):
                 if dist[0][i] >= 400.0:
                     similiar_images.append({"id": image_data[label[val[i]]]["id"], "dist": float(dist[0][i])})
     return similiar_images
 
 def calculate_album(person_embd, album_data):
+    similiar_album = []
+    person_embd = np.array(person_embd, dtype='f')
+    person_embd = np.expand_dims(person_embd, axis=0)
+    if len(album_data) != 0:
+        d = 512
+        k = len(album_data)
+        index = faiss.IndexFlatIP(d)
+        label = []
+        print(len(album_data), "album length")
+        #start adding image to faiss
+        for idx, val in enumerate(album_data):
+            index.add(np.array([val["embeddings"]], dtype='f'))
+            label.append(idx)
+        print(index.ntotal, "total embeddings in index")
+        dist, idx = index.search(person_embd, k)
+        # print(len(idx[0]))
+        if len(idx[0]) != 0:
+            for i, val in enumerate(idx[0]):
+                if dist[0][i] >= 400.0:
+                    similiar_album.append(album_data[label[val]])
+    return similiar_album
+
+def calculate_album_selfie(person_embd, album_data):
     similiar_album = []
     person_embd = np.array(person_embd, dtype='f')
     person_embd = np.expand_dims(person_embd, axis=0)
@@ -124,12 +147,10 @@ def calculate_album(person_embd, album_data):
             label.append(idx)
         
         dist, idx = index.search(person_embd, k)
-        if len(idx) != 0:
-            for i, val in enumerate(idx):
-                print(dist[0][i])
-                print(album_data[label[val[i]]]["id"])
+        if len(idx[0]) != 0:
+            for i, val in enumerate(idx[0]):
                 if dist[0][i] >= 400.0:
-                    similiar_album.append(album_data[label[val[i]]])
+                    similiar_album.append({"album": album_data[label[val]], "dist": float(dist[0][i])})
     return similiar_album
 
 def update_or_add_album(id_album, similiar_images, album_data_json, emb):
@@ -167,8 +188,20 @@ def generate_album(path, album_data_json, image_data_json):
        else:
             update_or_add_album(id_album=face_names[idx], album_data_json=album_data_json, similiar_images=similiar_images, emb=emb)
 
-file_test = "data_album.json"
-file_image_test = "data_image.json"
-image_test = "dl10.jpeg"
+def get_selfie_response(person_embd, album_data_json, selfie_data_json):
+    album_found = [] 
+    existing_album_data = read_album_db_json(album_data_json=album_data_json)
+    album_found = calculate_album_selfie(person_embd=person_embd, album_data=existing_album_data)
+    with open(selfie_data_json, "w") as outfile:
+        json.dump(album_found, outfile, indent=4)
 
-generate_album(path=image_test, album_data_json=file_test, image_data_json=file_image_test)
+album_data = "album.json"
+image_data = "image.json"
+test_input = "img2.jpg"
+
+data = generate_face_embeddings(path=test_input)
+
+get_selfie_response(person_embd=data[0], album_data_json=album_data, selfie_data_json="selfie.json")
+
+# res = DeepFace.verify(img1_path="input.jpeg", img2_path="img1.jpg", detector_backend="dlib", enforce_detection=True, model_name=models[0], distance_metric="cosine")
+# print(res)
