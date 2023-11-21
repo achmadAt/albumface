@@ -28,7 +28,6 @@ def generate_faces_image(path: str, album_dir: str):
         image_names.append(f"{name}{idx}.jpg")
     return image_names
 
-
 #Get face embeddings from image
 def generate_face_embeddings(path: str):
     embeddings = []
@@ -107,7 +106,7 @@ def calculate_image(person_embd, image_data):
         if len(idx) != 0:
             for i, val in enumerate(idx):
                 if dist[0][i] >= 400.0:
-                    similiar_images.append({"id": image_data[label[val[i]]]["id"],"name": image_data[label[val[i]]]["name"], "dist": float(dist[0][i])})
+                    similiar_images.append({"id": image_data[label[val[i]]]["id"], "dist": float(dist[0][i])})
     return similiar_images
 
 def calculate_album(person_embd, album_data):
@@ -127,17 +126,11 @@ def calculate_album(person_embd, album_data):
         dist, idx = index.search(person_embd, k)
         if len(idx) != 0:
             for i, val in enumerate(idx):
+                print(dist[0][i])
+                print(album_data[label[val[i]]]["id"])
                 if dist[0][i] >= 400.0:
                     similiar_album.append(album_data[label[val[i]]])
     return similiar_album
-
-def get_selfie_response(person_embd, album_data_json, selfie_data_json):
-    album_found = [] 
-    existing_album_data = read_album_db_json(album_data_json=album_data_json)
-    album_found = calculate_album(person_embd=person_embd, album_data=existing_album_data)
-    with open(selfie_data_json, "w") as outfile:
-        json.dump(album_found, outfile, indent=4)
-
 
 def update_or_add_album(id_album, similiar_images, album_data_json, emb):
     existing_album_data = []
@@ -164,7 +157,7 @@ def generate_album(path, album_data_json, image_data_json):
     image_data = read_image_db_json(image_data_json=image_data_json)
     for idx, emb in enumerate(embd):
         #add the origin as similiar
-       similiar_images = [{"id": image_id, "name": path,"dist": 500.0 }]
+       similiar_images = [{"id": image_id,"dist": 500.0 }]
        similiar_images = calculate_image(person_embd=emb, image_data=image_data)
        album_found = calculate_album(person_embd=emb, album_data=existing_album_data)
        if len(album_found) != 0:
@@ -173,3 +166,9 @@ def generate_album(path, album_data_json, image_data_json):
             update_or_add_album(id_album=id_album, album_data_json=album_data_json, similiar_images=similiar, emb=emb)
        else:
             update_or_add_album(id_album=face_names[idx], album_data_json=album_data_json, similiar_images=similiar_images, emb=emb)
+
+file_test = "data_album.json"
+file_image_test = "data_image.json"
+image_test = "dl10.jpeg"
+
+generate_album(path=image_test, album_data_json=file_test, image_data_json=file_image_test)
