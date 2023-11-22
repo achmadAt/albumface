@@ -152,12 +152,32 @@ def calculate_album_selfie(person_embd, album_data):
                     similiar_album.append({"album": album_data[label[val]], "dist": float(dist[0][i])})
     return similiar_album
 
+def selfie_json_clean(album_found_data, selfie_data_json):
+    clean_album_data = []
+    if len(album_found_data) != 0:
+        for idx, val in enumerate(album_found_data):
+            album = {"id": val["album"]["id"], "similiar_images": val["album"]["similiar_images"]}
+            clean_data = {"album": album, "dist": val["dist"]}
+            clean_album_data.append(clean_data)
+    with open(str(selfie_data_json) + "_clean.json", "w") as outfile:
+        json.dump(clean_album_data, outfile, indent=4)
+
+def album_json_clean(existing_album_data, album_data_json):
+    clean_album_data = []
+    if len(existing_album_data) != 0:
+        for idx, val in enumerate(existing_album_data):
+            clean_data = {"id": val["id"], "similiar_images": val["similiar_images"]}
+            clean_album_data.append(clean_data)
+    with open(str(album_data_json)+"_clean.json", "w") as outfile:
+        json.dump(clean_album_data, outfile, indent=4)
+
 def get_selfie_response(person_embd, album_data_json, selfie_data_json):
     album_found = [] 
     existing_album_data = read_album_db_json(album_data_json=album_data_json)
-    album_found = calculate_album(person_embd=person_embd, album_data=existing_album_data)
+    album_found = calculate_album_selfie(person_embd=person_embd, album_data=existing_album_data)
     with open(selfie_data_json, "w") as outfile:
         json.dump(album_found, outfile, indent=4)
+    selfie_json_clean(album_found_data=album_found, selfie_data_json=selfie_data_json)
 
 
 def update_or_add_album(id_album, similiar_images, album_data_json, emb):
@@ -169,13 +189,14 @@ def update_or_add_album(id_album, similiar_images, album_data_json, emb):
     if len(existing_album_data) != 0:
         for idx, val in enumerate(existing_album_data):
             if val["id"] == id_album:
-                val["similiar_images"].append(similiar_images)
+                val["similiar_images"] = similiar_images
                 is_found = True
     if is_found != True:
         new_data = {"id": id_album, "similiar_images": [similiar_images], "embeddings": embed}
         existing_album_data.append(new_data)
     with open(album_data_json, "w") as outfile:
         json.dump(existing_album_data, outfile, indent=4)
+    album_json_clean(existing_album_data=existing_album_data, album_data_json=album_data_json)
 
 def generate_album(path, album_data_json, image_data_json):
     face_names = generate_faces_image(path=path, album_dir="album")
@@ -185,8 +206,9 @@ def generate_album(path, album_data_json, image_data_json):
     image_data = read_image_db_json(image_data_json=image_data_json)
     for idx, emb in enumerate(embd):
         #add the origin as similiar
-       similiar_images = [{"id": image_id, "name": path,"dist": 500.0 }]
        similiar_images = calculate_image(person_embd=emb, image_data=image_data)
+       if len(similiar_images) == 0:
+            similiar_images = [{"id": image_id, "name": path,"dist": float(500.0) }]
        album_found = calculate_album(person_embd=emb, album_data=existing_album_data)
        if len(album_found) != 0:
             id_album = album_found[0]["id"]
