@@ -16,6 +16,19 @@ def initialize_folder(name: str):
         os.makedirs(album_dir, exist_ok=True)
         print("Directory", album_dir, "created")
 
+#ensure unique in similiar image
+def ensure_unique(similiar_images):
+    ids = set()
+    result = []
+    if len(similiar_images) != 0:
+        for val in similiar_images:
+            if val["id"] not in ids:
+                ids.add(val["id"])
+                result.append(val)
+    
+    return result
+
+
 #Generate face image from photo
 def generate_faces_image(path: str, album_dir: str):
     initialize_folder(album_dir)
@@ -95,7 +108,7 @@ def calculate_image(person_embd, image_data):
     if len(image_data) != 0:
         d = 512
         k = len(image_data)
-        index = faiss.IndexFlatIP(d)
+        index = faiss.IndexFlatL2(d)
         label = []
         #start adding image to faiss
         for idx, val in enumerate(image_data):
@@ -106,7 +119,7 @@ def calculate_image(person_embd, image_data):
         dist, idx = index.search(person_embd, k)
         if len(idx[0]) != 0:
             for i, val in enumerate(idx[0]):
-                if dist[0][i] >= 400.0:
+                if dist[0][i] <= 215.0:
                     similiar_images.append({"id": image_data[label[val]]["id"],"name": image_data[label[val]]["name"], "dist": float(dist[0][i])})
     return similiar_images
 
@@ -117,7 +130,7 @@ def calculate_album(person_embd, album_data):
     if len(album_data) != 0:
         d = 512
         k = len(album_data)
-        index = faiss.IndexFlatIP(d)
+        index = faiss.IndexFlatL2(d)
         label = []
         #start adding image to faiss
         for idx, val in enumerate(album_data):
@@ -127,7 +140,7 @@ def calculate_album(person_embd, album_data):
         dist, idx = index.search(person_embd, k)
         if len(idx[0]) != 0:
             for i, val in enumerate(idx[0]):
-                if dist[0][i] >= 400.0:
+                if dist[0][i] <= 215.0:
                     similiar_album.append(album_data[label[val]])
     return similiar_album
 
@@ -138,7 +151,7 @@ def calculate_album_selfie(person_embd, album_data):
     if len(album_data) != 0:
         d = 512
         k = len(album_data)
-        index = faiss.IndexFlatIP(d)
+        index = faiss.IndexFlatL2(d)
         label = []
         #start adding image to faiss
         for idx, val in enumerate(album_data):
@@ -148,7 +161,7 @@ def calculate_album_selfie(person_embd, album_data):
         dist, idx = index.search(person_embd, k)
         if len(idx[0]) != 0:
             for i, val in enumerate(idx[0]):
-                if dist[0][i] >= 400.0:
+                if dist[0][i] <= 215.0:
                     similiar_album.append({"album": album_data[label[val]], "dist": float(dist[0][i])})
     return similiar_album
 
@@ -207,6 +220,7 @@ def generate_album(path, album_data_json, image_data_json):
     for idx, emb in enumerate(embd):
         #add the origin as similiar
        similiar_images = calculate_image(person_embd=emb, image_data=image_data)
+       similiar_images = ensure_unique(similiar_images=similiar_images)
        if len(similiar_images) == 0:
             similiar_images = [{"id": image_id, "name": path,"dist": float(500.0) }]
        album_found = calculate_album(person_embd=emb, album_data=existing_album_data)

@@ -162,7 +162,7 @@ def update_or_add_album(id_album, similiar_images, album_data_json, emb):
     if len(existing_album_data) != 0:
         for idx, val in enumerate(existing_album_data):
             if val["id"] == id_album:
-                val["similiar_images"].append(similiar_images)
+                val["similiar_images"] = (similiar_images)
                 is_found = True
     if is_found != True:
         new_data = {"id": id_album, "similiar_images": [similiar_images], "embeddings": embed}
@@ -195,13 +195,15 @@ def get_selfie_response(person_embd, album_data_json, selfie_data_json):
     with open(selfie_data_json, "w") as outfile:
         json.dump(album_found, outfile, indent=4)
 
-album_data = "album.json"
-image_data = "image.json"
-test_input = "img2.jpg"
+# album_data = "album.json"
+# image_data = "image.json"
+# test_input = "img2.jpg"
 
-data = generate_face_embeddings(path=test_input)
+# data = generate_face_embeddings(path=test_input)
 
-get_selfie_response(person_embd=data[0], album_data_json=album_data, selfie_data_json="selfie.json")
+# get_selfie_response(person_embd=data[0], album_data_json=album_data, selfie_data_json="selfie.json")
 
 # res = DeepFace.verify(img1_path="input.jpeg", img2_path="img1.jpg", detector_backend="dlib", enforce_detection=True, model_name=models[0], distance_metric="cosine")
 # print(res)
+res = DeepFace.extract_faces("img.jpg", detector_backend="dlib")
+print(res)
