@@ -119,7 +119,7 @@ def calculate_image(person_embd, image_data):
         dist, idx = index.search(person_embd, k)
         if len(idx[0]) != 0:
             for i, val in enumerate(idx[0]):
-                if dist[0][i] <= 215.0:
+                if dist[0][i] <= 205.0:
                     similiar_images.append({"id": image_data[label[val]]["id"],"name": image_data[label[val]]["name"], "dist": float(dist[0][i])})
     return similiar_images
 
@@ -140,7 +140,7 @@ def calculate_album(person_embd, album_data):
         dist, idx = index.search(person_embd, k)
         if len(idx[0]) != 0:
             for i, val in enumerate(idx[0]):
-                if dist[0][i] <= 215.0:
+                if dist[0][i] <= 205.0:
                     similiar_album.append(album_data[label[val]])
     return similiar_album
 
